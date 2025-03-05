@@ -9,12 +9,19 @@ import SwiftUI
 
 struct HeroDetailView: View {
     let hero: Superhero
-    
+    let onFavoriteToggle: (Int) -> Void
+    @State private var isFavorite: Bool
+
+    init(hero: Superhero, onFavoriteToggle: @escaping (Int) -> Void) {
+        self.hero = hero
+        self.onFavoriteToggle = onFavoriteToggle
+        _isFavorite = State(initialValue: FavoritesManager.shared.isFavorite(heroId: hero.id))
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .center, spacing: 20) {
-                    // Hero Image
                     AsyncImage(url: URL(string: hero.images.lg)) { image in
                         image.resizable()
                             .aspectRatio(contentMode: .fit)
@@ -25,7 +32,6 @@ struct HeroDetailView: View {
                     }
                     .frame(height: 300)
                     
-                    // Hero Name
                     Text(hero.name)
                         .font(.largeTitle)
                         .fontWeight(.bold)
@@ -35,7 +41,6 @@ struct HeroDetailView: View {
                         Text("Powerstats")
                             .font(.headline)
                             .multilineTextAlignment(.center)
-                        
                         HStack(alignment: .center) {
                             PowerstatView(title: "Intelligence", value: hero.powerstats.intelligence)
                             PowerstatView(title: "Strength", value: hero.powerstats.strength)
@@ -47,8 +52,8 @@ struct HeroDetailView: View {
                     Group {
                         Text("Biography")
                             .font(.headline)
+                            .italic()
                             .multilineTextAlignment(.center)
-                        
                         VStack(alignment: .center, spacing: 10) {
                             HeroInfoRow(label: "Full Name", value: hero.biography.fullName)
                             HeroInfoRow(label: "Place of Birth", value: hero.biography.placeOfBirth)
@@ -60,22 +65,37 @@ struct HeroDetailView: View {
                     Group {
                         Text("Appearance")
                             .font(.headline)
+                            .italic()
                             .multilineTextAlignment(.center)
-                        
                         VStack(alignment: .center, spacing: 10) {
                             HeroInfoRow(label: "Gender", value: hero.appearance.gender)
                             HeroInfoRow(label: "Race", value: hero.appearance.race ?? "Unknown")
                         }
                         .padding(.horizontal)
                     }
+                    
+                    Button(action: {
+                        onFavoriteToggle(hero.id)
+                        isFavorite = FavoritesManager.shared.isFavorite(heroId: hero.id)
+                    }) {
+                        HStack {
+                            Image(systemName: isFavorite ? "star.fill" : "star")
+                                .foregroundColor(.yellow)
+                            Text(isFavorite ? "Remove from Favorites" : "Add to Favorites")
+                        }
+                        .padding()
+                        .background(Color.yellow.opacity(0.2))
+                        .cornerRadius(10)
+                    }
                 }
-                // Add padding to respect the safe area (plus some extra spacing)
                 .padding(.top, geometry.safeAreaInsets.top + 16)
                 .padding(.bottom, geometry.safeAreaInsets.bottom + 16)
                 .frame(minHeight: geometry.size.height)
             }
-            // Extend the scroll view's background into the safe areas
             .edgesIgnoringSafeArea(.all)
+        }
+        .onChange(of: hero.id) { _, newId in
+            isFavorite = FavoritesManager.shared.isFavorite(heroId: newId)
         }
     }
 }
@@ -83,12 +103,11 @@ struct HeroDetailView: View {
 struct PowerstatView: View {
     let title: String
     let value: Int
-    
+
     var body: some View {
         VStack {
             Text(title)
                 .font(.caption)
-            
             Text("\(value)")
                 .font(.title2)
                 .fontWeight(.bold)
@@ -103,13 +122,14 @@ struct PowerstatView: View {
 struct HeroInfoRow: View {
     let label: String
     let value: String
-    
+
     var body: some View {
         HStack {
-            Text(label + ":")
+            Text("\(label):")
                 .fontWeight(.bold)
             Text(value.isEmpty ? "Unknown" : value)
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
 }
+
