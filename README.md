@@ -1,3 +1,8 @@
+Divided the project into three layers:
+1) Data -> Services (network) and local database (UserDefault) managers
+2) Domain -> UI and data models
+3) UI -> tried to make UI (Views) as stupid as possible
+
 Screenshots:
 
 ![Simulator Screenshot - iPhone 16 Pro - 2025-03-06 at 09 50 58](https://github.com/user-attachments/assets/545d2e02-dd5b-4fe8-87bb-5c9f0bb065d2)
